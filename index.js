@@ -33,11 +33,12 @@ app.get("/api/scrape", async (req, res) => {
 
     // 🧠 Tambah user agent realistis
     await page.setExtraHTTPHeaders({
-      "x-user-key": process.env.USER_KEY || "xxxxx",
-      "x-user-pass": process.env.USER_PASS || "yyyyy",
+      "x-api-user": process.env.USER_KEY || "xxxxx",
+      "x-api-key": process.env.USER_PASS || "yyyyy",
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
       "Accept-Language": "en-US,en;q=0.9",
+      "Accept": "application/json, text/plain, */*",
     });
 
     // URL target
@@ -47,6 +48,7 @@ app.get("/api/scrape", async (req, res) => {
 
     // Jika Cloudflare page terdeteksi
     const body = await page.content();
+    console.log("RAW BODY:", process.env.USER_KEY + "|" + process.env.USER_PASS);
     if (body.includes("cloudflare") || body.includes("Ray ID")) {
       await browser.close();
       return res.json({
@@ -57,6 +59,7 @@ app.get("/api/scrape", async (req, res) => {
 
     // Ambil JSON langsung (lebih aman)
     const raw = await page.evaluate(() => document.body.innerText);
+    
     const json = JSON.parse(raw);
 
     await browser.close();
