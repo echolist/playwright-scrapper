@@ -48,7 +48,7 @@ app.get("/api/scrape", async (req, res) => {
 
     // Jika Cloudflare page terdeteksi
     const body = await page.content();
-    console.log("RAW BODY:", process.env.USER_KEY + "|" + process.env.USER_PASS);
+    
     if (body.includes("cloudflare") || body.includes("Ray ID")) {
       await browser.close();
       return res.json({
