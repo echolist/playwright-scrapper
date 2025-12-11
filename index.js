@@ -22,8 +22,9 @@ app.get("/api/check-playwright", async (req, res) => {
   }
 });
 
-app.get("/api/scrape", async (req, res) => {
+app.get("/api/scrape/:id", async (req, res) => {
   try {
+    const school_id = req.params.id || "0";
     const browser = await playwrightChromium.launch({
       headless: true,
       args: ["--no-sandbox", '--disable-setuid-sandbox']
@@ -31,7 +32,6 @@ app.get("/api/scrape", async (req, res) => {
 
     const page = await browser.newPage();
 
-    // 🧠 Tambah user agent realistis
     await page.setExtraHTTPHeaders({
       "x-api-user": process.env.USER_KEY || "xxxxx",
       "x-api-key": process.env.USER_PASS || "yyyyy",
@@ -42,7 +42,7 @@ app.get("/api/scrape", async (req, res) => {
     });
 
     // URL target
-    const targetUrl = "https://www.osaa.org/api/schools/65?year=2025";
+    const targetUrl = `https://www.osaa.org/api/schools/${school_id}?year=2025`;
 
     await page.goto(targetUrl, { waitUntil: "networkidle" });
 
