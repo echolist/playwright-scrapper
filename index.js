@@ -1,5 +1,8 @@
 import express from "express";
-import { chromium } from "@playwright/test";
+import { chromium as playwrightChromium } from "playwright-extra";
+import stealth from "playwright-extra-plugin-stealth";
+
+playwrightChromium.use(stealth());
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,39 +25,46 @@ app.get("/api/check-playwright", async (req, res) => {
 
 app.get("/api/scrape", async (req, res) => {
   try {
-    const browser = await chromium.launch({
+    const browser = await playwrightChromium.launch({
       headless: true,
-      args: ["--no-sandbox"],
+      args: ["--no-sandbox"]
     });
 
     const page = await browser.newPage();
 
+    // 🧠 Tambah user agent realistis
+    await page.setExtraHTTPHeaders({
+      "x-user-key": process.env.USER_KEY || "xxxxx",
+      "x-user-pass": process.env.USER_PASS || "yyyyy",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept-Language": "en-US,en;q=0.9",
+    });
+
+    // URL target
     const targetUrl = "https://www.osaa.org/api/schools/65?year=2025";
 
-    await page.setExtraHTTPHeaders({
-        "x-user-key": process.env.USER_KEY,
-        "x-user-pass": process.env.USER_PASS
-    });
+    await page.goto(targetUrl, { waitUntil: "networkidle" });
 
-    await page.goto(targetUrl, {
-      waitUntil: "networkidle",
-      timeout: 60000
-    });
+    // Jika Cloudflare page terdeteksi
+    const body = await page.content();
+    if (body.includes("cloudflare") || body.includes("Ray ID")) {
+      await browser.close();
+      return res.json({
+        success: false,
+        message: "Cloudflare blocked the request"
+      });
+    }
 
-    const content = await page.evaluate(() => document.body.innerText);
+    // Ambil JSON langsung (lebih aman)
+    const raw = await page.evaluate(() => document.body.innerText);
+    const json = JSON.parse(raw);
 
     await browser.close();
 
-    res.json({
-      success: true,
-      data: content,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.toString(),
-    });
+    return res.json({ success: true, data: json });
+  } catch (err) {
+    return res.json({ success: false, message: err.toString() });
   }
 });
 
