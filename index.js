@@ -22,9 +22,10 @@ app.get("/api/check-playwright", async (req, res) => {
   }
 });
 
-app.get("/api/scrape/:str_url", async (req, res) => {
+app.get("/api/scrape", async (req, res) => {
   try {
-    const targetUrl = atob(req.params.str_url) || "";
+    const targetUrl = atob(req.query.str_url || "") ;
+    
     const browser = await playwrightChromium.launch({
       headless: true,
       args: ["--no-sandbox", '--disable-setuid-sandbox']
