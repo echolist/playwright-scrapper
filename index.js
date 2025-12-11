@@ -22,9 +22,9 @@ app.get("/api/check-playwright", async (req, res) => {
   }
 });
 
-app.get("/api/scrape/:id", async (req, res) => {
+app.get("/api/scrape/:str_url", async (req, res) => {
   try {
-    const school_id = req.params.id || "0";
+    const targetUrl = atob(req.params.str_url) || "";
     const browser = await playwrightChromium.launch({
       headless: true,
       args: ["--no-sandbox", '--disable-setuid-sandbox']
@@ -41,12 +41,8 @@ app.get("/api/scrape/:id", async (req, res) => {
       "Accept": "application/json, text/plain, */*",
     });
 
-    // URL target
-    const targetUrl = `https://www.osaa.org/api/schools/${school_id}?year=2025`;
-
     await page.goto(targetUrl, { waitUntil: "networkidle" });
 
-    // Jika Cloudflare page terdeteksi
     const body = await page.content();
     
     if (body.includes("cloudflare") || body.includes("Ray ID")) {
@@ -57,7 +53,6 @@ app.get("/api/scrape/:id", async (req, res) => {
       });
     }
 
-    // Ambil JSON langsung (lebih aman)
     const raw = await page.evaluate(() => document.body.innerText);
     
     const json = JSON.parse(raw);
