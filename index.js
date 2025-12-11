@@ -4,6 +4,22 @@ import { chromium } from "@playwright/test";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.get("/api/check-playwright", async (req, res) => {
+  try {
+    const browser = await chromium.launch({
+      headless: true,
+      args: ["--no-sandbox"]
+    });
+    const page = await browser.newPage();
+    await page.setContent("<h1>Playwright OK</h1>");
+    const html = await page.content();
+    await browser.close();
+    res.send(html);
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.toString() });
+  }
+});
+
 app.get("/api/scrape", async (req, res) => {
   try {
     const browser = await chromium.launch({
