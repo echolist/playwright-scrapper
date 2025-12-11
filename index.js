@@ -1,15 +1,14 @@
 import express from "express";
 import { chromium as playwrightChromium } from "playwright-extra";
-import stealth from "playwright-extra-plugin-stealth";
 
-playwrightChromium.use(stealth());
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get("/api/check-playwright", async (req, res) => {
   try {
-    const browser = await chromium.launch({
+    const browser = await playwrightChromium.launch({
       headless: true,
       args: ["--no-sandbox"]
     });
@@ -27,7 +26,7 @@ app.get("/api/scrape", async (req, res) => {
   try {
     const browser = await playwrightChromium.launch({
       headless: true,
-      args: ["--no-sandbox"]
+      args: ["--no-sandbox", '--disable-setuid-sandbox']
     });
 
     const page = await browser.newPage();
